@@ -2,6 +2,7 @@
 #include <vector>
 #include <bitset>
 #include <sstream>
+#include <fstream>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -10,6 +11,14 @@
 
 
 
+/**
+ * @brief BasicImage is class that realise basic work with image throw stb_image module.
+ *
+ * @throw CAN_NOT_LOAD_IMAGE_FILE(LOAD_IMAGE_PIXELS:CAN_NOT_LOAD_IMAGE_FILE) - When image loader in stb_image can not open image file;
+ * @throw CAN_NOT_SAVE_IMAGE - When function save_result can not save image with redacted data throw stb_image module;
+ *
+ * @return In constructor function class returns own object with accessible(public) functions: get_image_loader, get_image_params, get_pixels_range, save_result, free_space
+*/
 class BasicImage {
 public:
 	/**
@@ -84,6 +93,12 @@ private:
 
 
 
+/**
+ * @brief ChannelSwapping is class that realise encode and decode functionality of Channel Swapping encrypt algotithm.
+ *
+ * @throw TOO_MANY_SENSETIVE_DATA_TO_ENCODE - When encode function got too big sensetive data message even image can hold this;
+ * @throw IMAGE_CAN_NOT_BE_OPEN_TO_DECODE - When image loader on stb_image module can not open image file;
+*/
 class ChannelSwapping {
 public:
 	/**
@@ -190,6 +205,12 @@ private:
 
 
 
+/**
+ * @brief MidBitChange is class that realise encode and decode functionality of Mid Bit Changing encrypt algotithm.
+ *
+ * @throw MESSAGE_TO_LARGE_FOR_IMAGE - When encode function got too big sensetive data message even image can hold this;
+ * @throw FAILED_TO_SAVE_IMAGE - When image loader on stb_image module can not save redacted image in encode function;
+*/
 class MidBitChange {
 public:
 	/**
@@ -232,6 +253,7 @@ public:
 	 *
 	 * @param img_path Constant that contains path to input image file.
 	 * @param sens_data_size Lenght of data, that was encoded to image.
+	 *
 	 * @return String value that is result of decoding proccess.
 	*/
 	std::string decode(const std::string &img_path, const size_t sens_data_size) {
@@ -257,16 +279,100 @@ public:
 };
 
 
-int main() {
-	// ChannelSwapping csw; // DONE
 
-	// csw.encode("original.png", sens_data, "output.png");
-	// std::cout << csw.decode("output.png", csw.get_sens_data_size()) << std::endl;
+/**
+ * @brief EOFHiding is class that realise encode and decode functionality of End Of File hidding algotithm.
+ *
+ * @throw FILE_CAN_NOT_BE_OPEN - Universal error that appears when image file can not be open.
+ * @throw FILE_IS_EMPTY - universal Error that appears when image file is empty.
+ * @throw SENS_DATA_SIZE_IS_INCCORRECT - When sensetive data size is negative or equals zero.
+*/
+class EOFHiding {
+public:
+	/**
+	 * @brief Hidding(encoding) sensetive data in the end of file (EOF Steganography).
+	 * 
+	 * @param img_path Path to original(container) image file.
+	 * @param sens_data Sensetive data to hide.
+	 * @param output_path Output file path and name.
+	*/
+	void encode(const std::string &img_path, const std::string &sens_data, const std::string &output_path) {
+		std::ifstream in(img_path, std::ios::binary);
+
+		if (!in.is_open()) {
+			throw std::runtime_error("Error FILE_CAN_NOT_BE_OPEN: Failed to open input file '" + img_path + "'");
+		}
+
+		in.seekg(0, std::ios::end);
+
+		if (in.tellg() == 0) {
+			throw std::runtime_error("Error FILE_IS_EMPTY: Input file '" + img_path + "' is empty");
+		}
+
+		in.seekg(0, std::ios::beg);
+
+		std::ofstream out(output_path, std::ios::binary);
+
+		if (!out.is_open()) {
+			throw std::runtime_error("Error FILE_CAN_NOT_BE_OPEN: Failed to open input file '" + output_path + "'");
+		}
+
+		out << in.rdbuf(); // Just copy
+
+		out.write(sens_data.c_str(), sens_data.size()); // Adding sens data
+	}
+
+	/**
+	 * @brief Taking(decoding) sensetive data from th end of file.
+	 * 
+	 * @param img_path Path to container image file.
+	 * @param sens_data_size Lenght of hidden sensetive data.
+	 *
+	 * @return String data that is result of decoding.
+	*/
+	std::string decode(const std::string &img_path, long long int sens_data_size) {
+		if (sens_data_size <= 0) {
+			throw std::runtime_error("Error SENS_DATA_SIZE_IS_INCCORRECT: Invalid data size (must be positive)");
+		}
+
+		std::ifstream in(img_path, std::ios::binary | std::ios::ate);
+
+		if (!in.is_open()) {
+			throw std::runtime_error("Error FILE_CAN_NOT_BE_OPEN: Failed to open input file '" + img_path + "'");
+		}
+
+		long long int fileSize = in.tellg();
+		in.seekg(fileSize - sens_data_size);
+
+		std::vector<char> hidden_data(sens_data_size);
+		in.read(hidden_data.data(), sens_data_size);
+
+		std::string res (hidden_data.begin(), hidden_data.end());
+
+		return res;
+	}
+};
+
+
+
+
+int main() {
+	std::string sens_data {"This is a sensetive data!"};
+
+	// ChannelSwapping CSW; // DONE
+
+	// CSW.encode("original.png", sens_data, "output.png");
+	// std::cout << CSW.decode("output.png", CSW.get_sens_data_size()) << std::endl;
 
 	// MidBitChange MBC; // DONE
 
 	// MBC.encode("original.png", sens_data, "output.png");
 	// std::cout << MBC.decode("output.png", sens_data.size()) << std::endl;
+
+	EOFHiding EOFH; // DONE
+
+	EOFH.encode("original.png", sens_data, "output.png");
+	std::cout << EOFH.decode("output.png", sens_data.size()) << std::endl;
 	
 	return 0;
 }
