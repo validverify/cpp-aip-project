@@ -13,6 +13,9 @@ ImageData::~ImageData()
 std::string read_file_to_string(const std::string &file_path)
 {
     std::ifstream file(file_path, std::ios::binary);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file: " + file_path);
+    }
     std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     return content;
 }
@@ -22,6 +25,9 @@ void qim_embed(const std::string &original, const std::string &stego, const std:
 {
     ImageData img;
     img.data = stbi_load(original.c_str(), &img.width, &img.height, &img.channels, 0);
+    if (!img.data) {
+        throw std::runtime_error("Failed to load image");
+    }
 
     std::string msg = read_file_to_string(msg_file);
     std::string message_binary;
@@ -54,6 +60,9 @@ void qim_extract(const std::string &stego, const std::string &q_str, const std::
 {
     ImageData img;
     img.data = stbi_load(stego.c_str(), &img.width, &img.height, &img.channels, 0);
+    if (!img.data) {
+    throw std::runtime_error("Failed to load image");
+    }
 
     std::string message_binary = "";
     std::string extracted_message = "";
@@ -97,6 +106,9 @@ void lsb_embed(const std::string &original, const std::string &stego, const std:
 {
     ImageData img;
     img.data = stbi_load(original.c_str(), &img.width, &img.height, &img.channels, 0);
+    if (!img.data) {
+    throw std::runtime_error("Failed to load image");
+    }
 
     std::string msg = read_file_to_string(msg_file);
     std::string message_binary;
@@ -139,6 +151,9 @@ void lsb_extract(const std::string &stego, const std::string &output_file)
 {
     ImageData img;
     img.data = stbi_load(stego.c_str(), &img.width, &img.height, &img.channels, 0);
+    if (!img.data) {
+    throw std::runtime_error("Failed to load image");
+    }
     std::string message_binary = "";
     std::string extracted_message = "";
     const int total_pixels = img.width * img.height * img.channels;
@@ -177,6 +192,9 @@ void cd_embed(const std::string &original, const std::string &stego, const std::
 {
     ImageData img;
     img.data = stbi_load(original.c_str(), &img.width, &img.height, &img.channels, 0);
+    if (!img.data) {
+    throw std::runtime_error("Failed to load image");
+    }
     std::string msg = read_file_to_string(msg_file);
     std::string message_binary;
     for (char c : msg)
@@ -247,6 +265,9 @@ void cd_extract(const std::string &stego, const std::string &output_file)
 {
     ImageData img;
     img.data = stbi_load(stego.c_str(), &img.width, &img.height, &img.channels, 0);
+    if (!img.data) {
+    throw std::runtime_error("Failed to load image");
+    }
     std::string message_binary = "";
     std::string extracted_message = "";
     const int total_pixels = img.width * img.height;
